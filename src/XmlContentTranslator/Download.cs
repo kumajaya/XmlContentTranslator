@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
+using System.Collections.Generic;
 
 namespace XmlContentTranslator
 {
@@ -14,8 +15,15 @@ namespace XmlContentTranslator
             InitializeComponent();
             try
             {
-                var path = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
-                string[] urls = System.IO.File.ReadAllLines(path + "\\scada6.txt");
+                string[] path = new string[] {System.IO.Path.GetDirectoryName(Application.ExecutablePath), "scada6.txt"};
+                path = System.IO.File.ReadAllLines(Path.Combine(path));
+                List<string> urls = new List<string>();
+                foreach (string s in path)
+                {
+                    if (Uri.IsWellFormedUriString(s, UriKind.Absolute)) {
+                        urls.Add(s);
+                    }
+                }
                 comboBox1.DataSource = urls;
             }
             catch (Exception ex)
