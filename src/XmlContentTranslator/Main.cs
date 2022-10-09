@@ -43,6 +43,8 @@ namespace XmlContentTranslator
         string _secondLanguageFileName;
         bool _change;
         private Find _formFind;
+        private Download _formDownload;
+        private bool _scada = false;
 
         public Main()
         {
@@ -103,9 +105,16 @@ namespace XmlContentTranslator
             {
                 foreach (XmlNode childNode in doc.DocumentElement.ChildNodes)
                 {
-                    if (childNode.NodeType != XmlNodeType.Attribute)
+                    if (childNode.NodeType != XmlNodeType.Attribute && childNode.NodeType != XmlNodeType.Comment)
                     {
                         var treeNode = new TreeNode(childNode.Name);
+                        var attribute = childNode.Attributes["key"];
+                        if (attribute != null && attribute.InnerText.Contains("Scada.")) {
+                            _scada = true;
+                            treeNode.Text = attribute.InnerText;
+                        } else {
+                            _scada = false;
+                        }
                         treeNode.Tag = childNode;
                         treeView1.Nodes.Add(treeNode);
                         if (childNode.ChildNodes.Count > 0 && !XmlUtils.IsTextNode(childNode))
@@ -264,10 +273,11 @@ namespace XmlContentTranslator
         {
             if (listViewLanguageTags.Columns.Count == 2)
             {
-                if (node.NodeType != XmlNodeType.Comment && node.NodeType != XmlNodeType.CDATA)
+                if (node.NodeType != XmlNodeType.Comment && node.NodeType != XmlNodeType.CDATA && node.NodeType != XmlNodeType.Attribute)
                 {
 
                     ListViewItem item;
+                    var attribute = node.Attributes["key"];
                     if (node.NodeType == XmlNodeType.Attribute)
                     {
                         item = new ListViewItem("@" + node.Name);
@@ -276,12 +286,18 @@ namespace XmlContentTranslator
                     else if (XmlUtils.ContainsText(node))
                     {
                         item = new ListViewItem(node.Name);
+                        if (attribute != null && _scada) {
+                            item.Text = attribute.InnerText;
+                        }
 //                        item = new ListViewItem("#" + node.Name);
                         item.SubItems.Add(node.InnerXml);
                     }
                     else
                     {
                         item = new ListViewItem(node.Name);
+                        if (attribute != null && _scada) {
+                            item.Text = attribute.InnerText;
+                        }
                         item.SubItems.Add(node.InnerText);
                     }
 
@@ -328,6 +344,10 @@ namespace XmlContentTranslator
                 foreach (XmlNode childNode in node.ChildNodes)
                 {
                     var treeNode = new TreeNode(childNode.Name);
+                    var attribute = childNode.Attributes["key"];
+                    if (attribute != null && _scada) {
+                        treeNode.Text = attribute.InnerText;
+                    }
                     treeNode.Tag = childNode;
                     if (parentNode == null)
                     {
@@ -665,6 +685,7 @@ namespace XmlContentTranslator
             foreach (ListViewItem item in listViewLanguageTags.SelectedItems)
             {
                 oldText = item.SubItems[1].Text;
+                oldText = oldText.Replace(System.Environment.NewLine, "<br/>").Trim();
                 oldText = string.Join(Environment.NewLine, oldText.SplitToLines());
                 oldLines.Add(oldText);
                 var urlEncode = HttpUtility.UrlEncode(sb + newText);
@@ -985,7 +1006,7 @@ namespace XmlContentTranslator
             }
         }
 
-        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        private void OpenOnlineFile(string url)
         {
             openFileDialog1.FileName = string.Empty;
             openFileDialog1.DefaultExt = ".xml";
@@ -995,7 +1016,6 @@ namespace XmlContentTranslator
             var doc = new XmlDocument();
             try
             {
-                const string url = "https://raw.githubusercontent.com/SubtitleEdit/subtitleedit/main/LanguageBaseEnglish.xml";
                 var wc = new WebClient();
                 var xml = wc.DownloadString(url);
                 MakeNew();
@@ -1009,6 +1029,11 @@ namespace XmlContentTranslator
             }
 
             OpenSecondFile();
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            OpenOnlineFile("https://raw.githubusercontent.com/SubtitleEdit/subtitleedit/main/LanguageBaseEnglish.xml");
         }
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1054,6 +1079,26 @@ namespace XmlContentTranslator
                     }
                 }
                 index++;
+            }
+        }
+
+        private void DownloadFile() {
+            if (_formDownload.DownloadText.Length == 0)
+                return;
+
+            OpenOnlineFile(_formDownload.DownloadText);
+        }
+
+        private void downloadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_formDownload == null)
+            {
+                _formDownload = new Download();
+            }
+
+            if (_formDownload.ShowDialog(this) == DialogResult.OK)
+            {
+                DownloadFile();
             }
         }
 

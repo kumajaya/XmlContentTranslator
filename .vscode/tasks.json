@@ -1,0 +1,35 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "dotnetCommand",
+            "description": "Run build or clean command?",
+            "options": [
+                "build",
+                "clean"
+            ],
+            "default": "build"
+        }
+    ],
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "${input:dotnetCommand}",
+                // Ask dotnet build to generate full paths for file names.
+                "${workspaceFolder}/src/XmlContentTranslator.sln",
+                "/property:GenerateFullPaths=true",
+                // Do not generate summary otherwise it leads to duplicate errors in Problems panel
+                "/consoleloggerparameters:Summary",
+                "/property:Configuration=Release"
+            ],
+            "group": "build",
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
