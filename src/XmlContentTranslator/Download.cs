@@ -15,7 +15,7 @@ namespace XmlContentTranslator
             InitializeComponent();
             try
             {
-                string[] path = new string[] {System.IO.Path.GetDirectoryName(Application.ExecutablePath), "scada6.txt"};
+                string[] path = new string[] {System.IO.Path.GetDirectoryName(Application.ExecutablePath), "scada.txt"};
                 path = System.IO.File.ReadAllLines(Path.Combine(path));
                 List<string> urls = new List<string>();
                 foreach (string s in path)

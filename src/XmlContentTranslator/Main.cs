@@ -97,6 +97,18 @@ namespace XmlContentTranslator
 
         private bool OpenFirstXmlDocument(XmlDocument doc)
         {
+            if (doc.DocumentElement != null
+                && doc.DocumentElement.Name.EndsWith("dictionaries", StringComparison.OrdinalIgnoreCase) ) {
+                    if (doc.DocumentElement.SelectSingleNode("Dictionary/Phrase").Attributes != null
+                            && doc.DocumentElement.SelectSingleNode("Dictionary/Phrase").Attributes["key"] != null) {
+                        _scada = true;
+                    } else {
+                        _scada = false;
+                    }
+            } else {
+                _scada = false;
+            }
+
             listViewLanguageTags.Columns.Add("Tag", 150);
             TryGetLanguageNameAttribute(doc, comboBoxFrom);
 
@@ -105,15 +117,11 @@ namespace XmlContentTranslator
             {
                 foreach (XmlNode childNode in doc.DocumentElement.ChildNodes)
                 {
-                    if (childNode.NodeType != XmlNodeType.Attribute && childNode.NodeType != XmlNodeType.Comment)
+                    if (childNode.NodeType != XmlNodeType.Attribute)
                     {
                         var treeNode = new TreeNode(childNode.Name);
-                        var attribute = childNode.Attributes["key"];
-                        if (attribute != null && attribute.InnerText.Contains("Scada.")) {
-                            _scada = true;
-                            treeNode.Text = attribute.InnerText;
-                        } else {
-                            _scada = false;
+                        if (childNode.Attributes != null && childNode.Attributes["key"] != null && _scada) {
+                            treeNode.Text = childNode.Attributes["key"].InnerText;
                         }
                         treeNode.Tag = childNode;
                         treeView1.Nodes.Add(treeNode);
@@ -273,21 +281,23 @@ namespace XmlContentTranslator
         {
             if (listViewLanguageTags.Columns.Count == 2)
             {
-                if (node.NodeType != XmlNodeType.Comment && node.NodeType != XmlNodeType.CDATA && node.NodeType != XmlNodeType.Attribute)
+                if (node.NodeType != XmlNodeType.Comment && node.NodeType != XmlNodeType.CDATA)
                 {
-
-                    ListViewItem item;
-                    var attribute = node.Attributes["key"];
+                    var item = new ListViewItem(node.Name);
                     if (node.NodeType == XmlNodeType.Attribute)
                     {
-                        item = new ListViewItem("@" + node.Name);
-                        item.SubItems.Add(node.InnerText);
+                        if (item.Text.Contains("key", StringComparison.OrdinalIgnoreCase) && _scada) {
+                            return;
+                        } else {
+                            item.Text = "@" + item.Text;
+                            item.SubItems.Add(node.InnerText);
+                        }
                     }
                     else if (XmlUtils.ContainsText(node))
                     {
                         item = new ListViewItem(node.Name);
-                        if (attribute != null && _scada) {
-                            item.Text = attribute.InnerText;
+                        if (node.Attributes != null && node.Attributes["key"] != null && _scada) {
+                            item.Text = node.Attributes["key"].InnerText;
                         }
 //                        item = new ListViewItem("#" + node.Name);
                         item.SubItems.Add(node.InnerXml);
@@ -295,9 +305,6 @@ namespace XmlContentTranslator
                     else
                     {
                         item = new ListViewItem(node.Name);
-                        if (attribute != null && _scada) {
-                            item.Text = attribute.InnerText;
-                        }
                         item.SubItems.Add(node.InnerText);
                     }
 
@@ -344,9 +351,8 @@ namespace XmlContentTranslator
                 foreach (XmlNode childNode in node.ChildNodes)
                 {
                     var treeNode = new TreeNode(childNode.Name);
-                    var attribute = childNode.Attributes["key"];
-                    if (attribute != null && _scada) {
-                        treeNode.Text = attribute.InnerText;
+                    if (childNode.Attributes != null && childNode.Attributes["key"] != null && _scada) {
+                        treeNode.Text = childNode.Attributes["key"].InnerText;
                     }
                     treeNode.Tag = childNode;
                     if (parentNode == null)

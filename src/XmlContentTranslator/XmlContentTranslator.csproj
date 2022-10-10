@@ -114,6 +114,9 @@
     <Content Include="file.ico" />
     <Content Include="xct.ico" />
     <Content Include="xct2.ico" />
+    <Content Include="scada.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
