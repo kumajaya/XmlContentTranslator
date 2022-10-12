@@ -142,41 +142,50 @@ namespace XmlContentTranslator
             return true;
         }
 
-        private void SetLanguage(ComboBox comboBox, XmlDocument doc)
-        {
+        private int SetComboBox(ComboBox comboBox, string culture) {
             int index = 0;
             comboBox.SelectedIndex = -1;
             int defaultIndex = -1;
             bool isDefaultSet = false;
+            foreach (ComboBoxItem item in comboBox.Items)
+            {
+                if (item.Value == culture)
+                {
+                    comboBox.SelectedIndex = index;
+                    return -1;
+                }
+                if (isDefaultSet == false && item.Value == "en")
+                {
+                    defaultIndex = index;
+                    isDefaultSet = true;
+                }
+                index++;
+            }
+
+            culture = culture.Substring(0, 2);
+            index = 0;
+            foreach (ComboBoxItem item in comboBox.Items)
+            {
+                if (item.Value == culture)
+                {
+                    comboBox.SelectedIndex = index;
+                    return -1;
+                }
+                index++;
+            }
+            return defaultIndex;
+        }
+
+        private void SetLanguage(ComboBox comboBox, XmlDocument doc)
+        {
+            comboBox.SelectedIndex = -1;
+            int defaultIndex = -1;
             if (doc != null && doc.DocumentElement != null && doc.DocumentElement.SelectSingleNode("General/CultureName") != null)
             {
-                string culture = doc.DocumentElement.SelectSingleNode("General/CultureName").InnerText;
-                foreach (ComboBoxItem item in comboBox.Items)
-                {
-                    if (item.Value == culture)
-                    {
-                        comboBox.SelectedIndex = index;
-                        return;
-                    }
-                    if (isDefaultSet == false && item.Value == "en")
-                    {
-                        defaultIndex = index;
-                        isDefaultSet = true;
-                    }
-                    index++;
-                }
-
-                culture = culture.Substring(0, 2);
-                index = 0;
-                foreach (ComboBoxItem item in comboBox.Items)
-                {
-                    if (item.Value == culture)
-                    {
-                        comboBox.SelectedIndex = index;
-                        return;
-                    }
-                    index++;
-                }
+                defaultIndex = SetComboBox(comboBox, doc.DocumentElement.SelectSingleNode("General/CultureName").InnerText);
+            } else if (doc != null && doc.DocumentElement != null && doc.DocumentElement.Attributes != null
+                    && doc.DocumentElement.Attributes["culture"] != null) {
+                defaultIndex = SetComboBox(comboBox, doc.DocumentElement.Attributes["culture"].InnerText);
             }
             if (defaultIndex >= 0)
                 comboBox.SelectedIndex = defaultIndex;
@@ -253,6 +262,10 @@ namespace XmlContentTranslator
             else if (doc.DocumentElement != null && doc.DocumentElement.Attributes["name"] != null)
             {
                 listViewLanguageTags.Columns.Add(doc.DocumentElement.Attributes["name"].InnerText, 200);
+            }
+            else if (doc.DocumentElement != null && doc.DocumentElement.Attributes["lang"] != null)
+            {
+                listViewLanguageTags.Columns.Add(doc.DocumentElement.Attributes["lang"].InnerText, 200);
             }
             else
             {
